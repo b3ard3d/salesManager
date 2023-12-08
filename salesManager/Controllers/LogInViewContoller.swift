@@ -60,6 +60,15 @@ final class LogInViewContoller: UIViewController{
     private lazy var registrationButton: UIButton = {
         let button = UIButton()
         button.setTitle("Регистрация", for: .normal)
+        button.setTitleColor(UIColor.systemGray, for: .normal)
+        button.addTarget(self, action: #selector(self.registrationButtonClicked), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
+    /*private lazy var registrationButton: UIButton = {
+        let button = UIButton()
+        button.setTitle("Регистрация", for: .normal)
         button.backgroundColor = .systemGray
         button.layer.cornerRadius = 10
         button.addTarget(self, action: #selector(self.registrationButtonClicked), for: .touchUpInside)
