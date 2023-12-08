@@ -9,6 +9,20 @@ import UIKit
 
 final class LogInViewContoller: UIViewController{
     
+    private lazy var scrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        scrollView.backgroundColor = .white
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        return scrollView
+    }()
+    
+    private lazy var contentView: UIView = {
+        let contentView = UIView()
+        contentView.backgroundColor = .white
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        return contentView
+    }()
+    
     private lazy var logoImageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(named: "logo"))
         imageView.clipsToBounds = true
@@ -16,6 +30,19 @@ final class LogInViewContoller: UIViewController{
         imageView.contentMode = .scaleAspectFit
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
+    }()
+    
+    private lazy var loginPasswordStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.backgroundColor = .systemGray6
+        stackView.clipsToBounds = true
+        stackView.axis = .vertical
+        stackView.distribution = .fillEqually
+        stackView.layer.borderWidth = 0.5
+        stackView.layer.borderColor = UIColor.lightGray.cgColor
+        stackView.layer.cornerRadius = 10
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        return stackView
     }()
     
     private lazy var loginTextField: UITextField = {
@@ -27,7 +54,6 @@ final class LogInViewContoller: UIViewController{
         textField.leftView = UIView(frame: CGRect(x: 0, y: 10, width: 10, height: textField.frame.height))
         textField.leftViewMode = .always
         textField.layer.borderColor = UIColor.lightGray.cgColor
-        textField.layer.cornerRadius = 10
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
     }()
@@ -42,7 +68,6 @@ final class LogInViewContoller: UIViewController{
         textField.leftView = UIView(frame: CGRect(x: 0, y: 10, width: 10, height: textField.frame.height))
         textField.leftViewMode = .always
         textField.layer.borderColor = UIColor.lightGray.cgColor
-        textField.layer.cornerRadius = 10
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
     }()
@@ -61,16 +86,6 @@ final class LogInViewContoller: UIViewController{
         let button = UIButton()
         button.setTitle("Регистрация", for: .normal)
         button.setTitleColor(UIColor.systemGray, for: .normal)
-        button.addTarget(self, action: #selector(self.registrationButtonClicked), for: .touchUpInside)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-    
-    /*private lazy var registrationButton: UIButton = {
-        let button = UIButton()
-        button.setTitle("Регистрация", for: .normal)
-        button.backgroundColor = .systemGray
-        button.layer.cornerRadius = 10
         button.addTarget(self, action: #selector(self.registrationButtonClicked), for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
@@ -105,48 +120,62 @@ final class LogInViewContoller: UIViewController{
         
     func setupView() {
         view.backgroundColor = .systemBackground
-        view.addSubview(logoImageView)
-        view.addSubview(loginTextField)
-        view.addSubview(passwordTextField)
-        view.addSubview(signUpButton)
-        view.addSubview(registrationButton)
-        view.addSubview(invalidLabel)
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        contentView.addSubview(logoImageView)
+        contentView.addSubview(loginPasswordStackView)
+        contentView.addSubview(signUpButton)
+        contentView.addSubview(registrationButton)
+        contentView.addSubview(invalidLabel)
+        loginPasswordStackView.addArrangedSubview(loginTextField)
+        loginPasswordStackView.addArrangedSubview(passwordTextField)
         
         let tap = UITapGestureRecognizer(target: self, action: #selector(tapKeyboardOff(_:)))
         view.addGestureRecognizer(tap)
+        
+        let notificationCenter = NotificationCenter.default
+        notificationCenter.addObserver(self, selector: #selector(adjustForKeyboard), name: UIResponder.keyboardWillHideNotification, object: nil)
+        notificationCenter.addObserver(self, selector: #selector(adjustForKeyboard), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
     }
     
     func setupContraint() {
         let screenWidth = UIScreen.main.bounds.width
         
         NSLayoutConstraint.activate([
-            loginTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            loginTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            loginTextField.heightAnchor.constraint(equalToConstant: 50),
-            loginTextField.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor, constant: -5),
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leftAnchor.constraint(equalTo: view.leftAnchor),
+            scrollView.rightAnchor.constraint(equalTo: view.rightAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             
-            passwordTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            passwordTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            passwordTextField.heightAnchor.constraint(equalToConstant: 50),
-            passwordTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor, constant: 5),
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            contentView.centerXAnchor.constraint(equalTo: scrollView.centerXAnchor),
+            contentView.centerYAnchor.constraint(equalTo: scrollView.centerYAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
+            contentView.heightAnchor.constraint(equalTo: scrollView.heightAnchor),
+            
+            loginPasswordStackView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            loginPasswordStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            loginPasswordStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            loginPasswordStackView.heightAnchor.constraint(equalToConstant: 100),
                         
-            logoImageView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-            logoImageView.bottomAnchor.constraint(equalTo: loginTextField.topAnchor, constant: -25),
+            logoImageView.centerXAnchor.constraint(equalTo: contentView.safeAreaLayoutGuide.centerXAnchor),
+            logoImageView.bottomAnchor.constraint(equalTo: loginPasswordStackView.topAnchor, constant: -25),
             logoImageView.widthAnchor.constraint(equalToConstant: screenWidth - 100),
             
-            signUpButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            signUpButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            signUpButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            signUpButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             signUpButton.heightAnchor.constraint(equalToConstant: 50),
-            signUpButton.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 20),
+            signUpButton.topAnchor.constraint(equalTo: loginPasswordStackView.bottomAnchor, constant: 20),
             
-            registrationButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            registrationButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            registrationButton.heightAnchor.constraint(equalToConstant: 50),
+            registrationButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             registrationButton.topAnchor.constraint(equalTo: signUpButton.bottomAnchor, constant: 10),
             
             invalidLabel.topAnchor.constraint(equalTo: registrationButton.bottomAnchor),
-            invalidLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            invalidLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20)
+            invalidLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            invalidLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20)
         ])
     }
     
@@ -214,6 +243,19 @@ final class LogInViewContoller: UIViewController{
         navigationController?.pushViewController(RegistrationViewController(), animated: true)
         loginTextField.resignFirstResponder()
         passwordTextField.resignFirstResponder()
+    }
+    
+    @objc private func adjustForKeyboard(notification: NSNotification) {
+        if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue {
+            let screenHeight = UIScreen.main.bounds.height
+            let keyboardRectangle = keyboardFrame.cgRectValue
+            let keyboardHeight = keyboardRectangle.height
+            let difference = keyboardHeight - ((screenHeight / 2) - 230)
+            if ((screenHeight / 2) - 230) <= keyboardHeight {
+                let contentOffset: CGPoint = notification.name == UIResponder.keyboardWillHideNotification ? .zero : CGPoint(x: 0, y:  difference)
+                self.scrollView.setContentOffset(contentOffset, animated: true)
+            }
+        }
     }
     
 }
