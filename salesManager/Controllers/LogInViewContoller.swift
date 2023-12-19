@@ -11,14 +11,14 @@ final class LogInViewContoller: UIViewController{
     
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
-        scrollView.backgroundColor = .white
+        scrollView.backgroundColor = .systemBackground
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         return scrollView
     }()
     
     private lazy var contentView: UIView = {
         let contentView = UIView()
-        contentView.backgroundColor = .white
+        contentView.backgroundColor = .systemBackground
         contentView.translatesAutoresizingMaskIntoConstraints = false
         return contentView
     }()
