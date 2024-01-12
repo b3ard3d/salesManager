@@ -52,7 +52,8 @@ final class PartnerViewController: UIViewController {
         super.viewDidLoad()
         setupView()
         setupNavigationBar()
-        setupContraint()
+        setupTabBar()
+        setupConstraint()
         
         if let text = self.selectedArtworkUrl60 {
             self.setImageFromStringrURL(stringUrl: text)
@@ -71,7 +72,11 @@ final class PartnerViewController: UIViewController {
         navigationItem.backButtonTitle = "Назад"
     }
     
-    func setupContraint() {
+    private func setupTabBar() {
+        //tabBarController?.tabBar.isHidden = true
+    }
+    
+    func setupConstraint() {
         NSLayoutConstraint.activate([
             artworkImage.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             artworkImage.centerXAnchor.constraint(equalTo: view.centerXAnchor),

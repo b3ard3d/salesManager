@@ -6,8 +6,12 @@
 //
 
 import UIKit
+import LocalAuthentication
 
 final class LogInViewContoller: UIViewController{
+    
+    let defaults = UserDefaults.standard
+    let context = LAContext()
     
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -48,8 +52,8 @@ final class LogInViewContoller: UIViewController{
     private lazy var loginTextField: UITextField = {
         let textField = UITextField()
         textField.backgroundColor = .systemGray6
-        textField.textColor = .systemGray
-        textField.placeholder = "Email или телефон"
+        //textField.textColor = .systemGray
+        textField.placeholder = "Введите логин"
         textField.layer.borderWidth = 0.5
         textField.leftView = UIView(frame: CGRect(x: 0, y: 10, width: 10, height: textField.frame.height))
         textField.leftViewMode = .always
@@ -62,8 +66,8 @@ final class LogInViewContoller: UIViewController{
         let textField = UITextField()
         textField.backgroundColor = .systemGray6
         textField.isSecureTextEntry = true
-        textField.textColor = .systemGray
-        textField.placeholder = "Пароль"
+        //textField.textColor = .systemGray
+        textField.placeholder = "Введите пароль"
         textField.layer.borderWidth = 0.5
         textField.leftView = UIView(frame: CGRect(x: 0, y: 10, width: 10, height: textField.frame.height))
         textField.leftViewMode = .always
@@ -77,31 +81,9 @@ final class LogInViewContoller: UIViewController{
         button.setTitle("Войти", for: .normal)
         button.backgroundColor = .systemGray
         button.layer.cornerRadius = 10
-        button.addTarget(self, action: #selector(self.signUpButtonButtonClicked), for: .touchUpInside)
+        button.addTarget(self, action: #selector(self.signUpButtonClicked), for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
-    }()
-    
-    private lazy var registrationButton: UIButton = {
-        let button = UIButton()
-        button.setTitle("Регистрация", for: .normal)
-        button.setTitleColor(UIColor.systemGray, for: .normal)
-        button.addTarget(self, action: #selector(self.registrationButtonClicked), for: .touchUpInside)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
-    
-    private lazy var invalidLabel: UILabel = {
-        let label = UILabel()
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.textAlignment = .left
-        label.textColor = .lightGray
-        label.font = .systemFont(ofSize: 12)
-        label.numberOfLines = 8
-        label.contentMode = .scaleToFill
-        label.textAlignment = .center
-        label.isHidden = true
-        return label
     }()
     
     private lazy var validationData = ValidationData()
@@ -111,11 +93,48 @@ final class LogInViewContoller: UIViewController{
         setupNavigationBar()
         setupView()
         setupContraint()
+                
+        let useFaceID = defaults.bool(forKey: "useFaceID")
+        if useFaceID == true {
+            if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) {
+                context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: "Please authenticate to proceed.") { (success, error) in
+                    if success {
+                        DispatchQueue.main.async {
+                            //self.navigationController?.pushViewController(MainViewController(), animated: true)
+                            
+                            guard let window = UIApplication.shared.keyWindow else {
+                                return
+                            }
+                            guard let rootViewController = window.rootViewController else {
+                                return
+                            }
+                            let viewController = PartnerTabBarController()
+                            viewController.view.frame = rootViewController.view.frame
+                            viewController.view.layoutIfNeeded()
+
+                            UIView.transition(with: window, duration: 0.6, options: .transitionFlipFromLeft, animations: {
+                                window.rootViewController = viewController
+                            }, completion: nil)
+                        }
+                    } else {
+                        guard let error = error else { return }
+                        print(error.localizedDescription)
+                    }
+                }
+            }
+        }
+        
+  /*      let userAuthorization = defaults.bool(forKey: "userAuthorization")
+        if userAuthorization == true {
+            navigationController?.pushViewController(MainViewController(), animated: true)
+        }   */
     }
 
     private func setupNavigationBar() {
-        navigationItem.backButtonTitle = "Назад"
-        navigationController?.navigationBar.tintColor = .systemGray
+        //navigationItem.backButtonTitle = "Назад"
+        //navigationController?.navigationBar.tintColor = .systemGray
+        navigationItem.hidesBackButton = true
+        tabBarController?.tabBar.isHidden = false
     }
         
     func setupView() {
@@ -125,8 +144,6 @@ final class LogInViewContoller: UIViewController{
         contentView.addSubview(logoImageView)
         contentView.addSubview(loginPasswordStackView)
         contentView.addSubview(signUpButton)
-        contentView.addSubview(registrationButton)
-        contentView.addSubview(invalidLabel)
         loginPasswordStackView.addArrangedSubview(loginTextField)
         loginPasswordStackView.addArrangedSubview(passwordTextField)
         
@@ -168,21 +185,8 @@ final class LogInViewContoller: UIViewController{
             signUpButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
             signUpButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
             signUpButton.heightAnchor.constraint(equalToConstant: 50),
-            signUpButton.topAnchor.constraint(equalTo: loginPasswordStackView.bottomAnchor, constant: 20),
-            
-            registrationButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            registrationButton.topAnchor.constraint(equalTo: signUpButton.bottomAnchor, constant: 10),
-            
-            invalidLabel.topAnchor.constraint(equalTo: registrationButton.bottomAnchor),
-            invalidLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            invalidLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20)
+            signUpButton.topAnchor.constraint(equalTo: loginPasswordStackView.bottomAnchor, constant: 20)
         ])
-    }
-    
-    private func validEmail(email: String) -> Bool {
-        let emailReg = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
-        let validEmail = NSPredicate(format:"SELF MATCHES %@", emailReg)
-        return validEmail.evaluate(with: email)
     }
 
     private func validPassword(password : String) -> Bool {
@@ -196,62 +200,100 @@ final class LogInViewContoller: UIViewController{
         passwordTextField.resignFirstResponder()
     }
     
-    @objc func signUpButtonButtonClicked() {
-        guard let email = loginTextField.text else {return}
+    @objc func signUpButtonClicked() {
+        
+        guard let login = loginTextField.text else {return}
         guard let password = passwordTextField.text else {return}
-        let enteredEmail = validEmail(email: email)
+        //let enteredLogin = login.count == 11 ? true : false
         let enteredPassword = validPassword(password: password)
         
-        if email.isEmpty && password.isEmpty {
+        let serverAdress = defaults.string(forKey: "serverAdress") ?? ""
+        print("Server: ", serverAdress)
+        
+        if login.isEmpty && password.isEmpty {
             loginTextField.shake()
             passwordTextField.shake()
-        } else if email.isEmpty {
+        } else if login.isEmpty {
             loginTextField.shake()
         } else if password.isEmpty {
             passwordTextField.shake()
+        } else if (serverAdress == "" || serverAdress == " ") {
+            let alert = UIAlertController(title: "Настройки не заполнены", message: "Проверьте настройки и попробуйте снова", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+            present(alert, animated: true, completion: nil)
         } else {
-            if !enteredPassword && !enteredEmail {
-                invalidLabel.text = validationData.invalidEmailAndPassword
-                invalidLabel.isHidden = false
-                passwordTextField.shake()
-                loginTextField.shake()
-            } else if !enteredPassword {
-                invalidLabel.text = validationData.invalidPassword
-                invalidLabel.isHidden = false
-                passwordTextField.shake()
-            } else if !enteredEmail {
-                invalidLabel.text = validationData.invalidEmail
-                invalidLabel.isHidden = false
-                loginTextField.shake()
+            //if (enteredLogin && enteredPassword) && (loginTextField.text != validationData.defaultLogin || passwordTextField.text != validationData.defaultPassword) {
+            if enteredPassword && (loginTextField.text != validationData.defaultLogin || passwordTextField.text != validationData.defaultPassword) {
+                let alert = UIAlertController(title: "Неверный логин или пароль", message: nil, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Oк", style: .default, handler: nil))
+                present(alert, animated: true, completion: nil)
             } else {
-                if (enteredEmail && enteredPassword) && (loginTextField.text != validationData.defaultLogin || passwordTextField.text != validationData.defaultPassword) {
-                    let alert = UIAlertController(title: "Неверный логин или пароль", message: nil, preferredStyle: .alert)
-                    alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-                    present(alert, animated: true, completion: nil)
-                } else {
-                    navigationController?.pushViewController(ViewController(), animated: true)
-                    invalidLabel.isHidden = true
-                }
+                let alert = UIAlertController(title: "Использовать FaceID/TouchID для входа?", message: nil, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Да", style: .default, handler: { action in
+                    self.defaults.set(true, forKey: "useFaceID")
+                    self.defaults.set(self.loginTextField.text, forKey: "userLogin")
+                    self.defaults.set(self.passwordTextField.text, forKey: "userPassword")
+                    self.defaults.set(true, forKey: "userAuthorization")
+                    
+                    //self.navigationController?.pushViewController(MainViewController(), animated: true)
+                    
+                    guard let window = UIApplication.shared.keyWindow else {
+                        return
+                    }
+                    guard let rootViewController = window.rootViewController else {
+                        return
+                    }
+                    let viewController = PartnerTabBarController()
+                    viewController.view.frame = rootViewController.view.frame
+                    viewController.view.layoutIfNeeded()
+
+                    UIView.transition(with: window, duration: 0.6, options: .transitionFlipFromLeft, animations: {
+                        window.rootViewController = viewController
+                    }, completion: nil)
+                    
+                }))
+                alert.addAction(UIAlertAction(title: "Нет", style: .default, handler: { action in
+                    self.defaults.set(self.loginTextField.text, forKey: "userLogin")
+                    self.defaults.set(self.passwordTextField.text, forKey: "userPassword")
+                    self.defaults.set(true, forKey: "userAuthorization")
+                                        
+                    //self.navigationController?.pushViewController(MainViewController(), animated: true)
+                    
+                    guard let window = UIApplication.shared.keyWindow else {
+                        return
+                    }
+                    guard let rootViewController = window.rootViewController else {
+                        return
+                    }
+                    
+                    let viewController = PartnerTabBarController()
+                    viewController.view.frame = rootViewController.view.frame
+                    viewController.view.layoutIfNeeded()
+
+                    UIView.transition(with: window, duration: 0.6, options: .transitionFlipFromLeft, animations: {
+                        window.rootViewController = viewController
+                    }, completion: nil)
+                }))
+                present(alert, animated: true, completion: nil)
+                
+         /*       defaults.set(loginTextField.text, forKey: "userLogin")
+                defaults.set(passwordTextField.text, forKey: "userPassword")
+                defaults.set(true, forKey: "userAuthorization")
+                
+                navigationController?.pushViewController(MainViewController(), animated: true)  */
             }
         }
-        
         loginTextField.resignFirstResponder()
         passwordTextField.resignFirstResponder()
     }
     
-    @objc func registrationButtonClicked() {
-        navigationController?.pushViewController(RegistrationViewController(), animated: true)
-        loginTextField.resignFirstResponder()
-        passwordTextField.resignFirstResponder()
-    }
-    
-    @objc private func adjustForKeyboard(notification: NSNotification) {
+     @objc private func adjustForKeyboard(notification: NSNotification) {
         if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue {
             let screenHeight = UIScreen.main.bounds.height
             let keyboardRectangle = keyboardFrame.cgRectValue
             let keyboardHeight = keyboardRectangle.height
-            let difference = keyboardHeight - ((screenHeight / 2) - 230)
-            if ((screenHeight / 2) - 230) <= keyboardHeight {
+            let difference = keyboardHeight - ((screenHeight / 2) - 165)
+            if ((screenHeight / 2) - 165) <= keyboardHeight {
                 let contentOffset: CGPoint = notification.name == UIResponder.keyboardWillHideNotification ? .zero : CGPoint(x: 0, y:  difference)
                 self.scrollView.setContentOffset(contentOffset, animated: true)
             }

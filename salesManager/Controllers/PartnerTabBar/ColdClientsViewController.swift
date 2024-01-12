@@ -1,17 +1,19 @@
 //
-//  PartnersViewController.swift
+//  ColdClientsViewController.swift
 //  salesManager
 //
-//  Created by Роман Кокорев on 26.12.2023.
+//  Created by Роман Кокорев on 10.01.2024.
 //
 
 import UIKit
 
-final class PartnersViewController: UIViewController {
+final class ColdClientsViewController1: UIViewController {
     
     let defaults = UserDefaults.standard
     let networkDataFetcher = NetworkDataFetcher()
     var searchResponse: SearchResponse? = nil
+        
+    let networkManager = NetworkManager()
         
     private lazy var tableView: UITableView = {
         let tableView = UITableView()
@@ -39,9 +41,7 @@ final class PartnersViewController: UIViewController {
             navigationItem.title = userLogin
         }
         
-        let urlString = "https://itunes.apple.com/search?term=50+cent&limit=5"
-        
-        networkDataFetcher.fetchTracks(urlString: urlString) { (searchResponse) in
+        networkManager.getTrack { searchResponse in
             guard let searchResponse = searchResponse else { return }
             self.searchResponse = searchResponse
             self.tableView.reloadData()
@@ -78,7 +78,21 @@ final class PartnersViewController: UIViewController {
             self.defaults.removeObject(forKey: "userPassword")
             self.defaults.removeObject(forKey: "userAuthorization")
             self.defaults.removeObject(forKey: "useFaceID")
-            self.navigationController?.pushViewController(LogInViewContoller(), animated: true)
+            //self.navigationController?.pushViewController(LogInViewContoller(), animated: true)
+            
+            guard let window = UIApplication.shared.keyWindow else {
+                return
+            }
+            guard let rootViewController = window.rootViewController else {
+                return
+            }
+            let viewController = MainTabBarController()
+            viewController.view.frame = rootViewController.view.frame
+            viewController.view.layoutIfNeeded()
+
+            UIView.transition(with: window, duration: 0.6, options: .transitionFlipFromLeft, animations: {
+                window.rootViewController = viewController
+            }, completion: nil)
         }))
         alert.addAction(UIAlertAction(title: "Нет", style: .default, handler: nil))
         present(alert, animated: true, completion: nil)
@@ -86,7 +100,7 @@ final class PartnersViewController: UIViewController {
 
 }
 
-extension PartnersViewController: UITableViewDataSource, UITableViewDelegate {
+extension ColdClientsViewController1: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return searchResponse?.results.count ?? 0
     }
@@ -95,6 +109,7 @@ extension PartnersViewController: UITableViewDataSource, UITableViewDelegate {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
         let track = searchResponse?.results[indexPath.row]
         cell.textLabel?.text = track?.trackName
+
         return cell
     }
     
@@ -109,6 +124,12 @@ extension PartnersViewController: UITableViewDataSource, UITableViewDelegate {
         viewController.selectedTrackName = searchResponse?.results[indexPath.row].trackName ?? ""
         viewController.selectedCollectionName = searchResponse?.results[indexPath.row].collectionName ?? ""
         viewController.selectedArtworkUrl60 = searchResponse?.results[indexPath.row].artworkUrl60 ?? ""
+        
+  /*      viewController.selectedArtistName = tracks[indexPath.row].artistName
+        viewController.selectedTrackName = tracks[indexPath.row].trackName
+        viewController.selectedCollectionName = tracks[indexPath.row].collectionName
+        viewController.selectedArtworkUrl60 = tracks[indexPath.row].artworkUrl60    */
+        
         navigationController?.pushViewController(viewController, animated: true)
     }
     

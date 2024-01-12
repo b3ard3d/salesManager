@@ -1,17 +1,19 @@
 //
-//  ColdClientsViewController.swift
+//  MainViewController.swift
 //  salesManager
 //
-//  Created by Роман Кокорев on 26.12.2023.
+//  Created by Роман Кокорев on 05.12.2023.
 //
 
 import UIKit
 
-final class ColdClientsViewController: UIViewController {
+final class MainViewController: UIViewController {
     
     let defaults = UserDefaults.standard
     let networkDataFetcher = NetworkDataFetcher()
     var searchResponse: SearchResponse? = nil
+        
+    let networkManager = NetworkManager()
         
     private lazy var tableView: UITableView = {
         let tableView = UITableView()
@@ -39,13 +41,19 @@ final class ColdClientsViewController: UIViewController {
             navigationItem.title = userLogin
         }
         
-        let urlString = "https://itunes.apple.com/search?term=cent&limit=5"
+  /*      let urlString = "https://itunes.apple.com/search?term=50+cent&limit=5"
         
         networkDataFetcher.fetchTracks(urlString: urlString) { (searchResponse) in
             guard let searchResponse = searchResponse else { return }
             self.searchResponse = searchResponse
             self.tableView.reloadData()
-        }
+        }   */
+        
+        networkManager.getTrack(findString: "50 cent", complitionHander: { searchResponse in
+            guard let searchResponse = searchResponse else { return }
+            self.searchResponse = searchResponse
+            self.tableView.reloadData()
+        })
     }
 
     func setupView() {
@@ -59,10 +67,10 @@ final class ColdClientsViewController: UIViewController {
     }
     
     private func setupTabBar() {
-        //tabBarController?.tabBar.isHidden = true
+        tabBarController?.tabBar.isHidden = true
     }
     
-    func setupContraint() {
+    func setupContraint() {        
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -78,7 +86,21 @@ final class ColdClientsViewController: UIViewController {
             self.defaults.removeObject(forKey: "userPassword")
             self.defaults.removeObject(forKey: "userAuthorization")
             self.defaults.removeObject(forKey: "useFaceID")
-            self.navigationController?.pushViewController(LogInViewContoller(), animated: true)
+            //self.navigationController?.pushViewController(LogInViewContoller(), animated: true)
+            
+            guard let window = UIApplication.shared.keyWindow else {
+                return
+            }
+            guard let rootViewController = window.rootViewController else {
+                return
+            }
+            let viewController = MainTabBarController()
+            viewController.view.frame = rootViewController.view.frame
+            viewController.view.layoutIfNeeded()
+
+            UIView.transition(with: window, duration: 0.6, options: .transitionFlipFromLeft, animations: {
+                window.rootViewController = viewController
+            }, completion: nil)
         }))
         alert.addAction(UIAlertAction(title: "Нет", style: .default, handler: nil))
         present(alert, animated: true, completion: nil)
@@ -86,7 +108,7 @@ final class ColdClientsViewController: UIViewController {
 
 }
 
-extension ColdClientsViewController: UITableViewDataSource, UITableViewDelegate {
+extension MainViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return searchResponse?.results.count ?? 0
     }
@@ -95,6 +117,7 @@ extension ColdClientsViewController: UITableViewDataSource, UITableViewDelegate 
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
         let track = searchResponse?.results[indexPath.row]
         cell.textLabel?.text = track?.trackName
+
         return cell
     }
     
@@ -109,9 +132,13 @@ extension ColdClientsViewController: UITableViewDataSource, UITableViewDelegate 
         viewController.selectedTrackName = searchResponse?.results[indexPath.row].trackName ?? ""
         viewController.selectedCollectionName = searchResponse?.results[indexPath.row].collectionName ?? ""
         viewController.selectedArtworkUrl60 = searchResponse?.results[indexPath.row].artworkUrl60 ?? ""
+        
+  /*      viewController.selectedArtistName = tracks[indexPath.row].artistName
+        viewController.selectedTrackName = tracks[indexPath.row].trackName
+        viewController.selectedCollectionName = tracks[indexPath.row].collectionName
+        viewController.selectedArtworkUrl60 = tracks[indexPath.row].artworkUrl60    */
+        
         navigationController?.pushViewController(viewController, animated: true)
     }
     
 }
-
-
