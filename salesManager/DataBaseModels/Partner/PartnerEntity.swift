@@ -12,18 +12,12 @@ class PartnerEntity: NSManagedObject {
     
     class func findOrCreate(_ partner: Partner, context: NSManagedObjectContext) throws -> PartnerEntity {
         
-        if let partnerEntity = try? PartnerEntity.find(partnerID: partner.id, context: context) {
+        if let partnerEntity = try? PartnerEntity.find(uuid: partner.uuid, context: context) {
             return partnerEntity
         } else {
             let partnerEntity = PartnerEntity(context: context)
-            partnerEntity.id = partner.id
+            partnerEntity.uuid = partner.uuid
             partnerEntity.name = partner.name
-            partnerEntity.accessGroup = partner.accessGroup
-            partnerEntity.typeOfRelationship = partner.typeOfRelationship
-            partnerEntity.businessRegion = partner.businessRegion
-            partnerEntity.address = partner.address
-            partnerEntity.telephone = partner.telephone
-            partnerEntity.email = partner.email
             return partnerEntity
         }
     }
@@ -31,7 +25,6 @@ class PartnerEntity: NSManagedObject {
     class func all(_ context: NSManagedObjectContext) throws -> [PartnerEntity] {
         
         let request: NSFetchRequest<PartnerEntity> = PartnerEntity.fetchRequest()
-        
         do {
             return try context.fetch(request)
         } catch {
@@ -39,10 +32,11 @@ class PartnerEntity: NSManagedObject {
         }
     }
     
-    class func find(partnerID: String, context: NSManagedObjectContext) throws -> PartnerEntity? {
+    class func find(uuid: String, context: NSManagedObjectContext) throws -> PartnerEntity? {
         
         let request: NSFetchRequest<PartnerEntity> = PartnerEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "id == %d", partnerID)
+        //request.predicate = NSPredicate(format: "uuid == %d", uuid)
+        request.predicate = NSPredicate(format: "uuid like %@", uuid)
         
         do {
             let fetchResult = try context.fetch(request)
