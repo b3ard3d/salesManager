@@ -1,5 +1,5 @@
 //
-//  ColdClientsViewController.swift
+//  PartnerViewController.swift
 //  salesManager
 //
 //  Created by Роман Кокорев on 10.01.2024.
@@ -7,13 +7,14 @@
 
 import UIKit
 
-final class ColdClientsViewController1: UIViewController {
+class PartnersViewController: UIViewController {
     
     let defaults = UserDefaults.standard
-    let networkDataFetcher = NetworkDataFetcher()
-    var searchResponse: SearchResponse? = nil
-        
-    let networkManager = NetworkManager()
+    //var searchResponse: SearchResponse? = nil
+    //let networkManager = NetworkManager()
+    let dataManager = DataManager()
+    let coreDataManager = CoreDataManager.shared
+    var partners = [Partner]()
         
     private lazy var tableView: UITableView = {
         let tableView = UITableView()
@@ -28,22 +29,20 @@ final class ColdClientsViewController1: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupView()
-        setupContraint()
+        setupConstraint()
         setupNavigationBar()
         setupTabBar()
         
-        let userAuthorization = defaults.bool(forKey: "userAuthorization")
-        let userLogin = defaults.string(forKey: "userLogin")
-        let userPassword = defaults.string(forKey: "userPassword")
-        if userAuthorization {
-            let exitButton = UIBarButtonItem(title: "Выйти", style: .plain, target: self, action: #selector(exitButtonClicked))
-            navigationItem.rightBarButtonItems = [exitButton]
-            navigationItem.title = userLogin
-        }
+        if Reachability.isConnectedToNetwork() == true {
+             print("Internet connection OK")
+            
+          } else {
+             print("Internet connection FAILED")
+         }
         
-        networkManager.getTrack { searchResponse in
-            guard let searchResponse = searchResponse else { return }
-            self.searchResponse = searchResponse
+        dataManager.getAllPartners { partner in
+            self.partners = partner
+            self.partners.sort { $0.name < $1.name }
             self.tableView.reloadData()
         }
     }
@@ -56,13 +55,21 @@ final class ColdClientsViewController1: UIViewController {
     private func setupNavigationBar() {
         navigationItem.backButtonTitle = "Назад"
         navigationItem.hidesBackButton = true
+        
+        let userAuthorization = defaults.bool(forKey: "userAuthorization")
+        let userLogin = defaults.string(forKey: "userLogin") ?? ""
+        if userAuthorization {
+            let exitButton = UIBarButtonItem(title: "Выйти", style: .plain, target: self, action: #selector(exitButtonClicked))
+            navigationItem.leftBarButtonItems = [exitButton]
+            navigationItem.title = userLogin
+        }
     }
     
     private func setupTabBar() {
         //tabBarController?.tabBar.isHidden = true
     }
     
-    func setupContraint() {
+    func setupConstraint() {
         NSLayoutConstraint.activate([
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -79,6 +86,7 @@ final class ColdClientsViewController1: UIViewController {
             self.defaults.removeObject(forKey: "userAuthorization")
             self.defaults.removeObject(forKey: "useFaceID")
             //self.navigationController?.pushViewController(LogInViewContoller(), animated: true)
+            self.coreDataManager.deleteAllAndCreateNewDB()
             
             guard let window = UIApplication.shared.keyWindow else {
                 return
@@ -97,40 +105,50 @@ final class ColdClientsViewController1: UIViewController {
         alert.addAction(UIAlertAction(title: "Нет", style: .default, handler: nil))
         present(alert, animated: true, completion: nil)
     }
+    
+    @objc func addNewActionClicked() {
+        let alert = UIAlertController(title: "Создать", message: nil, preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "Встреча", style: .default, handler: { action in
+            let addColdClientViewController = AddColdClientViewController()
+            self.navigationController?.pushViewController(addColdClientViewController, animated: true)
+        }))
+        alert.addAction(UIAlertAction(title: "Закрыть", style: .cancel, handler: nil))
+        present(alert, animated: true, completion: nil)
+    }
+    
+/*    @objc func addPartnerButtonClicked() {
+        let alert = UIAlertController(title: "Хотите добавить нового партнера?", message: nil, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Да", style: .default, handler: { action in
+            //обработка действий
+            let addPartnerViewController = AddPartnerViewController()
+            self.navigationController?.pushViewController(addPartnerViewController, animated: true)
+            //self.present(addPartnerViewController, animated: true)
+        }))
+        alert.addAction(UIAlertAction(title: "Нет", style: .default, handler: nil))
+        present(alert, animated: true, completion: nil)
+    }   */
 
 }
 
-extension ColdClientsViewController1: UITableViewDataSource, UITableViewDelegate {
+extension PartnersViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return searchResponse?.results.count ?? 0
+        return partners.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-        let track = searchResponse?.results[indexPath.row]
-        cell.textLabel?.text = track?.trackName
+        let partner = partners[indexPath.row]
+        cell.textLabel?.text = partner.name
 
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        //print("artistName: ", searchResponse?.results[indexPath.row].artistName ?? "")
-        //print("trackName: ", searchResponse?.results[indexPath.row].trackName ?? "")
-        //print("collectionName: ", searchResponse?.results[indexPath.row].collectionName ?? "")
-        //print("artworkUrl60: ", searchResponse?.results[indexPath.row].artworkUrl60 ?? "")
-        
-        let viewController = PartnerViewController()
-        viewController.selectedArtistName = searchResponse?.results[indexPath.row].artistName ?? ""
-        viewController.selectedTrackName = searchResponse?.results[indexPath.row].trackName ?? ""
-        viewController.selectedCollectionName = searchResponse?.results[indexPath.row].collectionName ?? ""
-        viewController.selectedArtworkUrl60 = searchResponse?.results[indexPath.row].artworkUrl60 ?? ""
-        
-  /*      viewController.selectedArtistName = tracks[indexPath.row].artistName
-        viewController.selectedTrackName = tracks[indexPath.row].trackName
-        viewController.selectedCollectionName = tracks[indexPath.row].collectionName
-        viewController.selectedArtworkUrl60 = tracks[indexPath.row].artworkUrl60    */
-        
+        let viewController = DetailsPartnerViewController()
+        viewController.selectedName = partners[indexPath.row].name
+        viewController.selectedUUID = partners[indexPath.row].uuid
         navigationController?.pushViewController(viewController, animated: true)
     }
-    
+
 }
+
