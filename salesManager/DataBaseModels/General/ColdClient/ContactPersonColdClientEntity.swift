@@ -21,7 +21,7 @@ class ContactPersonColdClientEntity: NSManagedObject {
                 return result[0]
             }
             
-            if let coldClientEntity = try ColdClientEntity.find(coldClientUUID: contactPersonColdClient.owner_uuid, context: context) {
+            if let coldClientEntity = try ColdClientEntity.find(uuid: contactPersonColdClient.owner_uuid, context: context) {
                 
                 let entity = ContactPersonColdClientEntity(context: context)
                 entity.uuid = contactPersonColdClient.uuid

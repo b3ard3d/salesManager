@@ -119,7 +119,6 @@ final class AddContactInfoViewController: UIViewController {
         let closeButton = UIBarButtonItem(title: "Закрыть", style: .plain, target: self, action: #selector(closeButtonClicked))
         navigationItem.leftBarButtonItems = [closeButton]
         navigationItem.rightBarButtonItems = [saveButton]
-        //navigationItem.backButtonTitle = "Назад"
     }
     
     func setupConstraint() {
@@ -212,7 +211,6 @@ final class AddContactInfoViewController: UIViewController {
             telephoneTextField.shake()
             emailTextField.shake()
             addressTextField.shake()
-        //} else if !telephoneContactPerson.isEmpty && telephoneContactPerson.count != 11 {
         } else if !telephoneContactPerson.isEmpty && telephoneContactPerson.count != 18 {
             telephoneTextField.shake()
         } else if !emailContactPerson.isEmpty && !validEmail(email: emailContactPerson) {
@@ -245,28 +243,6 @@ final class AddContactInfoViewController: UIViewController {
                 let jsonData = try? JSONSerialization.data(withJSONObject: jsonArray)
             }
             
-   /*         // создать запрос POST
-            let url = URL(string: "http://httpbin.org/post")!
-            var request = URLRequest(url: url)
-            request.httpMethod = "POST"
-
-            // вставить данные JSON в запрос
-            request.httpBody = jsonData
-
-            // выполнить запрос и обработать ответ
-            let task = URLSession.shared.dataTask(with: request) { data, response, error in
-                guard let data = data, error == nil else {
-                    print(error?.localizedDescription ?? "No data")
-                    return
-                }
-                let responseJSON = try? JSONSerialization.jsonObject(with: data, options: [])
-                if let responseJSON = responseJSON as? [String: Any] {
-                    print(responseJSON)
-                }
-            }
-
-            task.resume()       */
-            
             let alert = UIAlertController(title: "Контактная информация сохранена", message: nil, preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "Ок", style: .default, handler: { action in
                 self.navigationController?.popViewController(animated: true)
@@ -292,14 +268,12 @@ final class AddContactInfoViewController: UIViewController {
     
     @objc private func adjustForKeyboard(notification: NSNotification) {
         if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue {
-            //let screenHeight = view.safeAreaLayoutGuide.layoutFrame.height // UIScreen.main.bounds.height
             let keyboardRectangle = keyboardFrame.cgRectValue
             let keyboardHeight = keyboardRectangle.height
             let heightTabBar = (self.tabBarController?.tabBar.frame.height ?? 49.0) + 10
             let emptySpaceHeight = view.frame.size.height - emailTextField.frame.origin.y - emailTextField.frame.size.height - heightTabBar
             let difference = keyboardHeight - emptySpaceHeight
             if emptySpaceHeight <= keyboardHeight {
-                //let contentOffset: CGPoint = notification.name == UIResponder.keyboardWillHideNotification ? .zero : CGPoint(x: 0, y:  difference)
                 self.scrollView.contentOffset = CGPoint(x: 0, y: difference)
             }
         }

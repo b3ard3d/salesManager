@@ -12,7 +12,7 @@ class ColdClientEntity: NSManagedObject {
     
     class func findOrCreate(_ coldClient: ColdClient, context: NSManagedObjectContext) throws -> ColdClientEntity {
         
-        if let coldClientEntity = try? ColdClientEntity.find(coldClientUUID: coldClient.uuid, context: context) {
+        if let coldClientEntity = try? ColdClientEntity.find(uuid: coldClient.uuid, context: context) {
             return coldClientEntity
         } else {
             let coldClientEntity = ColdClientEntity(context: context)
@@ -33,10 +33,10 @@ class ColdClientEntity: NSManagedObject {
         }
     }
     
-    class func find(coldClientUUID: String, context: NSManagedObjectContext) throws -> ColdClientEntity? {
+    class func find(uuid: String, context: NSManagedObjectContext) throws -> ColdClientEntity? {
         
         let request: NSFetchRequest<ColdClientEntity> = ColdClientEntity.fetchRequest()
-        request.predicate = NSPredicate(format: "uuid like %@", coldClientUUID)
+        request.predicate = NSPredicate(format: "uuid like %@", uuid)
         
         do {
             let fetchResult = try context.fetch(request)
